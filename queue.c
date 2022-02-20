@@ -322,12 +322,6 @@ bool q_insert_head(struct list_head *head, char *s)
         q_release_element(item);
         return false;
     }
-    // cppcheck-suppress nullPointer
-    element_t *q = list_entry(head, element_t, list);
-    if (q == NULL) {
-        q_release_element(item);
-        return false;
-    }
     list_add(&item->list, head);
     return true;
 }
@@ -380,7 +374,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
     if (!q) {
         return NULL;
     }
-    list_del_init(head->next);
+    list_del(head->next);
     if (sp != NULL) {
         strncpy(sp, q->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
@@ -401,7 +395,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     if (!q) {
         return NULL;
     }
-    list_del_init(head->prev);
+    list_del(head->prev);
     if (sp != NULL) {
         strncpy(sp, q->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
@@ -522,20 +516,14 @@ void q_swap(struct list_head *head)
  */
 void q_reverse(struct list_head *head)
 {
-    if (head == NULL)
-        return;
-    if (list_empty(head))
+    if (head == NULL || list_empty(head) || list_is_singular(head))
         return;
     struct list_head *current = head->prev;
-    struct list_head *next = NULL;
-    next = current->prev;
-    list_move_tail(current, head);
-    current = next;
-    while (current != head) {
-        next = current->prev;
+    do {
+        struct list_head *next = current->prev;
         list_move_tail(current, head);
         current = next;
-    }
+    } while (current != head);
 }
 
 /*
